@@ -1,3 +1,14 @@
+/**
+ * Tela Áreas (View) — LISTA das áreas (polígonos) desenhadas no mapa.
+ *
+ * FlatList com nome, cor, área, perímetro e observações de cada área, resumo com a soma
+ * em hectares e estado vazio. Tocar abre o detalhe; o cabeçalho tem atalho para o Mapa
+ * e o botão Exportar (CSV/KML/ZIP, ver components/Exportacao.tsx).
+ *
+ * Hooks: useState, useCallback + useFocusEffect (recarregar ao voltar do detalhe/mapa),
+ * useLayoutEffect (configurar os botões do cabeçalho antes de pintar a tela) e o hook
+ * personalizado useExportacao.
+ */
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,13 +23,13 @@ import { ScreenProps } from '../../routes';
 import { M2_POR_HECTARE } from '../../services/geodesia';
 import { listarPoligonos, Poligono } from '../../services/poligonos';
 
-// Lista das áreas (polígonos) desenhadas no mapa
 export default function Areas({ navigation }: ScreenProps<'Areas'>) {
   const { usuario } = useAuth();
   const [areas, setAreas] = useState<Poligono[]>([]);
   const [carregando, setCarregando] = useState(true);
   const { iniciar: iniciarExportacao, elementos: elementosExportacao } = useExportacao();
 
+  // Recarrega a lista sempre que a tela volta a ficar visível
   useFocusEffect(
     useCallback(() => {
       if (!usuario) return;
@@ -29,6 +40,7 @@ export default function Areas({ navigation }: ScreenProps<'Areas'>) {
     }, [usuario]),
   );
 
+  // Botões do cabeçalho: abrir o mapa e exportar
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -50,7 +62,7 @@ export default function Areas({ navigation }: ScreenProps<'Areas'>) {
     );
   }
 
-  const total = areas.reduce((s, a) => s + a.areaM2, 0);
+  const total = areas.reduce((s, a) => s + a.areaM2, 0); // soma de todas as áreas (m²)
 
   return (
     <View style={globalStyles.tela}>

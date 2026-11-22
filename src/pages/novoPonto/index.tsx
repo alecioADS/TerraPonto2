@@ -1,3 +1,15 @@
+/**
+ * Tela de coleta de ponto por GPS (View) — o "C" do CRUD.
+ *
+ * Lê o GPS do aparelho em tempo real (expo-location → watchPositionAsync, 1 leitura/s) e
+ * mostra latitude, longitude, altitude e precisão com semáforo (boa/razoável/baixa).
+ * "Registrar ponto aqui" grava a leitura atual (criarPonto) e abre o detalhe para
+ * completar nome, tipo e foto. Com o parâmetro `recoletarId`, vira RECOLETA: mostra o
+ * deslocamento e o azimute em relação à coordenada antiga antes de substituir.
+ *
+ * Hooks: useState (status do GPS, leitura, salvando), useRef (assinatura do GPS, para
+ * encerrar ao sair da tela e economizar bateria) e useEffect (ligar/desligar o GPS).
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
@@ -14,10 +26,9 @@ import { azimuteGraus, distanciaMetros } from '../../services/geodesia';
 import { permissaoLocalizacao } from '../../services/permissoes';
 import { criarPonto, obterPonto, Ponto, recoletarPonto } from '../../services/storage';
 
+// Etapas do GPS: pedindo permissão → buscando sinal → ativo (ou negado / erro)
 type Status = 'pedindo' | 'negado' | 'buscando' | 'ativo' | 'erro';
 
-// Tela de coleta: lê o GPS do aparelho em tempo real e registra o ponto.
-// Com o parâmetro recoletarId, funciona como RECOLETA de um ponto existente.
 export default function NovoPonto({ navigation, route }: ScreenProps<'NovoPonto'>) {
   const recoletarId = route.params?.recoletarId;
   const { usuario } = useAuth();

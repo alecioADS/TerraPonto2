@@ -1,3 +1,11 @@
+/**
+ * Tela de Cadastro de usuário (View) — formulário com validação por campo.
+ *
+ * Valida nome, e-mail, senha e confirmação; cada erro aparece embaixo do seu campo
+ * (componente CampoTexto). O Model (`cadastrarUsuario`) recusa e-mail já cadastrado.
+ *
+ * Hooks: useState (campos, erros, carregando) e useRef (encadear o foco dos campos).
+ */
 import React, { useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -7,6 +15,7 @@ import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
 import { cadastrarUsuario } from '../../services/storage';
 
+// Mensagem de erro por campo (campo sem erro = chave ausente)
 type Erros = Partial<Record<'nome' | 'email' | 'senha' | 'confirmar', string>>;
 
 export default function Cadastro({ navigation }: ScreenProps<'Cadastro'>) {
@@ -22,6 +31,7 @@ export default function Cadastro({ navigation }: ScreenProps<'Cadastro'>) {
   const senhaRef = useRef<TextInput>(null);
   const confirmarRef = useRef<TextInput>(null);
 
+  // Retorna true se o formulário está válido; senão mostra os erros nos campos
   function validar(): boolean {
     const novos: Erros = {};
     if (nome.trim().length < 3) novos.nome = 'Informe seu nome completo.';

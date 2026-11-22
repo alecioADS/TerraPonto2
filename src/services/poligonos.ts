@@ -1,3 +1,11 @@
+/**
+ * Persistência das áreas/polígonos (Model) — CRUD no AsyncStorage, por usuário
+ * (`@terraponto:poligonos:<email>`).
+ *
+ * A área (m²) e o perímetro (m) são calculados aqui sempre que os vértices mudam
+ * (services/geodesia.ts) e guardados junto, para a lista não recalcular tudo.
+ * Novas áreas recebem nome automático ("Área 01", "Área 02"...) e a próxima cor da paleta.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { areaPoligono, LatLng, perimetroPoligono } from './geodesia';

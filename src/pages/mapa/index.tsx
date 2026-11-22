@@ -26,10 +26,32 @@ import {
 import { permissaoLocalizacao } from '../../services/permissoes';
 import { listarPontos, Ponto } from '../../services/storage';
 
+// Região usada quando não há pontos, áreas nem localização conhecida (Araguari-MG)
 const REGIAO_PADRAO: Regiao = { latitude: -18.6486, longitude: -48.1934, latitudeDelta: 0.05, longitudeDelta: 0.05 };
 const COR_DESENHO = colors.laranjaMarco;
+// Folga ao enquadrar: deixa espaço para o cabeçalho, os botões laterais e o painel inferior
 const MARGENS_MAPA = { top: 120, right: 80, bottom: 260, left: 80 };
 
+/**
+ * Tela do Mapa (View) — a mais complexa do app.
+ *
+ * Modo "ver": imagem de satélite (ou ruas) com as áreas coloridas e etiquetadas e os
+ * pontos coletados; tocar numa área abre um cartão com as medidas, tocar num ponto abre
+ * o detalhe. Botões: satélite/ruas, rótulos, enquadrar tudo, minha posição.
+ * Modo "desenhar": cada toque cria um vértice (ou usa um ponto coletado), "Vértice GPS"
+ * usa a posição atual, vértices são arrastáveis, desfazer, área/perímetro ao vivo e
+ * alerta de lados que se cruzam. Também edita os vértices de uma área já salva.
+ *
+ * O mapa em si é o componente MapaBase (MapLibre no APK, react-native-maps no Expo Go);
+ * esta tela só entrega dados e recebe eventos. Os nomes e etiquetas são Views comuns
+ * posicionadas por cima do mapa com a projeção Web Mercator (função `projetar`).
+ *
+ * Hooks: useState (dados, modo, vértices, seleção, região visível), useRef (mapa e flags
+ * que não devem re-renderizar), useMemo (camadas do mapa — a tela re-renderiza a cada
+ * quadro durante o arrasto), useCallback + useFocusEffect (recarregar dados), useEffect
+ * (região inicial e aviso antes de sair com desenho não salvo) e useLayoutEffect (título
+ * e botões do cabeçalho conforme o modo).
+ */
 export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
   const params = route.params ?? {};
   const { usuario } = useAuth();

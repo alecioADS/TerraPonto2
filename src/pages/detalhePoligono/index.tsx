@@ -35,6 +35,17 @@ import {
   Poligono,
 } from '../../services/poligonos';
 
+/**
+ * Tela de detalhe da área/polígono (View) — formulário + medidas.
+ *
+ * Prévia estática no mapa (tocar abre o mapa grande focado na área), medidas em hectares,
+ * m², alqueire mineiro e paulista e perímetro (calculadas no Model, services/geodesia.ts),
+ * formulário de nome, cor e observações, "Editar vértices no mapa" e excluir.
+ *
+ * Hooks: useState (campos), useRef (referência ao mapa e "formulário já preenchido"),
+ * useCallback + useFocusEffect (recarregar medidas ao voltar da edição de vértices sem
+ * apagar o que o usuário digitou) e usePreferencias (satélite ou ruas na prévia).
+ */
 export default function DetalhePoligono({ navigation, route }: ScreenProps<'DetalhePoligono'>) {
   const { id, novo } = route.params;
   const { usuario } = useAuth();

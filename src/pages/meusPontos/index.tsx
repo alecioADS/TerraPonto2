@@ -1,3 +1,14 @@
+/**
+ * Tela "Meus pontos" (View) — LISTA principal do trabalho.
+ *
+ * FlatList com todos os pontos coletados: miniatura da foto, ícone do tipo, coordenada no
+ * formato escolhido (GMS/Decimal/UTM), semáforo de precisão e data. Tem busca por texto,
+ * estado vazio, exclusão com toque longo e o botão Exportar no cabeçalho.
+ *
+ * Hooks: useState (lista, busca, carregando), useCallback + useFocusEffect (recarregar ao
+ * voltar da edição), useLayoutEffect (botão do cabeçalho), usePreferencias (formato da
+ * coordenada) e useExportacao (menu de exportação).
+ */
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -44,6 +55,7 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
     }, [carregar]),
   );
 
+  // Toque longo num item: confirma e exclui (o Model também apaga a foto do aparelho)
   function confirmarExclusao(ponto: Ponto) {
     Alert.alert('Excluir ponto', `Deseja excluir "${ponto.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -64,6 +76,7 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
     navigation.setOptions({ headerRight: () => <BotaoExportar onPress={iniciarExportacao} /> });
   });
 
+  // Busca: filtra em memória por nome, tipo, observação e responsável
   const termo = busca.trim().toLowerCase();
   const filtrados = pontos.filter((p) =>
     `${p.nome} ${p.tipo} ${p.descricao} ${p.responsavel}`.toLowerCase().includes(termo),

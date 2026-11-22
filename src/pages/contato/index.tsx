@@ -1,3 +1,13 @@
+/**
+ * Tela "Fale conosco" (View) — FORMULÁRIO + API (requisitos do trabalho).
+ *
+ * Formulário com nome, e-mail, assunto (botões de escolha) e mensagem, com validação.
+ * Ao enviar, faz um POST na API JSONPlaceholder (services/api.ts → enviarContato) e mostra
+ * o número de protocolo devolvido pelo servidor.
+ *
+ * Hooks: useState (campos, erros, enviando), useRef (focar a mensagem quando ela é o campo
+ * com erro) e useAuth (preencher nome e e-mail com os dados do usuário logado).
+ */
 import React, { useRef, useState } from 'react';
 import {
   Alert,
@@ -33,6 +43,7 @@ export default function Contato({ navigation }: ScreenProps<'Contato'>) {
 
   const mensagemRef = useRef<TextInput>(null);
 
+  // Valida os campos e envia para a API
   async function handleEnviar() {
     const novos: typeof erros = {};
     if (nome.trim().length < 3) novos.nome = 'Informe seu nome.';

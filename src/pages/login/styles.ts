@@ -1,3 +1,5 @@
+// Estilos exclusivos da tela de Login (separados do componente para deixar o JSX limpo).
+// Layout: logo + marca no topo, cartão claro com o formulário e rodapé "offline".
 import { StyleSheet } from 'react-native';
 
 import { colors } from '../../global/colors';

@@ -1,20 +1,31 @@
 # TerraPonto - Do ponto ao terreno
 
-Aplicativo em React Native (Expo + TypeScript) para registro de pontos de campo
-(topografia / georreferenciamento) usando o **GPS do próprio aparelho**.
+Aplicativo em React Native (Expo + TypeScript) para levantamento de campo
+(topografia / georreferenciamento): coleta de pontos com o **GPS do próprio aparelho**,
+fotos, mapa de satélite com desenho e medição de áreas e exportação (CSV, KML, ZIP).
 Trabalho da disciplina de Dispositivos Móveis — Prof. Crispim Luiz Martins.
+
+📄 **Documentação**
+- [`docs/ENTREGA.md`](docs/ENTREGA.md) — requisitos do trabalho × implementação, capturas de tela e roteiro de avaliação
+- [`docs/DOCUMENTACAO_TECNICA.md`](docs/DOCUMENTACAO_TECNICA.md) — stack, arquitetura MVVM, modelo de dados, telas, mapa, fórmulas geodésicas, exportação, build e decisões técnicas
+
+<p>
+<img src="docs/telas/02-home.jpg" width="180"> <img src="docs/telas/03-coletar-ponto.jpg" width="180">
+<img src="docs/telas/08-mapa-area-selecionada.jpg" width="180"> <img src="docs/telas/10-detalhe-area.jpg" width="180">
+</p>
 
 ## Requisitos do trabalho atendidos
 
 | Requisito                    | Onde                                                        |
 | ---------------------------- | ----------------------------------------------------------- |
 | Cadastro / Login / Home      | `pages/cadastro`, `pages/login`, `pages/home`               |
-| + 4 telas                    | `novoPonto` (coleta GPS), `meusPontos`, `detalhePonto`, `clima`, `contato` |
-| Formulário                   | **Detalhes do ponto**, **Fale conosco** (e Cadastro)        |
-| Lista                        | **Meus pontos** (`FlatList` com busca, miniatura da foto e exclusão) |
+| + 4 telas (feitas 8)         | `novoPonto` (coleta GPS), `meusPontos`, `detalhePonto`, `mapa`, `areas`, `detalhePoligono`, `clima`, `contato` |
+| Formulário                   | **Detalhes do ponto**, **Detalhe da área**, **Fale conosco** (e Cadastro/Login) |
+| Lista                        | **Meus pontos** e **Áreas** (`FlatList`), previsão do **Clima** |
 | API                          | **Clima** (Open-Meteo, GET) e **Fale conosco** (JSONPlaceholder, POST) |
-| CRUD completo                | Criar (coleta GPS) · Ler (lista e detalhe) · Atualizar (detalhe) · Excluir (lista e detalhe) |
-| Hooks                        | `useState`, `useEffect`, `useRef`, `useContext`, `useCallback`, `useFocusEffect` |
+| CRUD completo                | Pontos e áreas: criar, ler, atualizar e excluir             |
+| Hooks                        | `useState`, `useEffect`, `useRef`, `useContext`, `useCallback`, `useMemo`, `useLayoutEffect`, `useFocusEffect` + hooks próprios |
+| Arquitetura                  | MVVM: View (`pages`, `components`) · ViewModel (hooks, `context`) · Model (`services`) |
 
 ## Fluxo de um ponto
 

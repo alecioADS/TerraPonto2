@@ -1,3 +1,14 @@
+/**
+ * Navegação do app (React Navigation – Native Stack).
+ *
+ * Implementa o padrão "rotas públicas x privadas": sem usuário logado só existem as telas
+ * Login e Cadastro; depois do login, o mesmo navegador passa a ter Home e as demais telas.
+ * Como as rotas dependem de `usuario` (AuthContext), entrar/sair troca a pilha sozinho —
+ * não é preciso chamar navigate('Home') nem tratar o botão voltar para o Login.
+ *
+ * `RootStackParamList` tipa os parâmetros de cada rota; `ScreenProps<'Nome'>` dá às telas
+ * os tipos corretos de `navigation` e `route.params` (TypeScript acusa navegação errada).
+ */
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -17,22 +28,22 @@ import Mapa from '../pages/mapa';
 import Areas from '../pages/areas';
 import DetalhePoligono from '../pages/detalhePoligono';
 
-// Tipagem das rotas e seus parâmetros
+// Tipagem das rotas e seus parâmetros (undefined = rota sem parâmetros)
 export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
   Home: undefined;
-  NovoPonto: { recoletarId?: string } | undefined;
+  NovoPonto: { recoletarId?: string } | undefined; // recoletarId: refazer a coleta de um ponto existente
   MeusPontos: undefined;
-  DetalhePonto: { id: string; novo?: boolean };
+  DetalhePonto: { id: string; novo?: boolean }; // novo: acabou de ser coletado (mostra aviso)
   Clima: { latitude: number; longitude: number; nome: string } | undefined;
   Contato: undefined;
   Mapa:
     | {
-        focoPontoId?: string;
-        focoPoligonoId?: string;
-        editarPoligonoId?: string;
-        novoDesenho?: boolean;
+        focoPontoId?: string; // abre centralizado num ponto
+        focoPoligonoId?: string; // abre enquadrando e selecionando uma área
+        editarPoligonoId?: string; // abre já editando os vértices de uma área
+        novoDesenho?: boolean; // abre já no modo de desenhar área
       }
     | undefined;
   Areas: undefined;

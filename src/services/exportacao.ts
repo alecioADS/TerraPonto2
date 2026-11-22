@@ -1,3 +1,14 @@
+/**
+ * Geração e entrega dos arquivos de exportação (Model / serviço).
+ *
+ * - gerarArquivoCsv: planilha dos pontos;
+ * - gerarArquivoKml: pontos e áreas para Google Earth / QGIS;
+ * - gerarArquivoZip: pacote completo (pontos.csv, areas.csv, terraponto.kml, fotos/ e
+ *   LEIA-ME.txt), montado com JSZip sem compressão (fotos JPEG já são comprimidas);
+ * - entregarArquivo: abre o compartilhamento do Android (expo-sharing) ou salva numa
+ *   pasta escolhida pelo usuário (Storage Access Framework do expo-file-system).
+ * Os arquivos são criados no cache do app e podem ser apagados pelo sistema depois.
+ */
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';

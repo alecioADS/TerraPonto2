@@ -1,3 +1,16 @@
+/**
+ * Persistência local de usuários, pontos e fotos (camada MODEL do MVVM).
+ *
+ * Tudo fica no próprio aparelho, sem servidor — o app funciona 100% offline em campo:
+ * - AsyncStorage (chave/valor, JSON): usuários e a lista de pontos de cada usuário
+ *   (`@terraponto:usuarios` e `@terraponto:pontos:<email>`);
+ * - expo-file-system: fotos copiadas para `documentDirectory/fotos/` (pasta permanente do
+ *   app; a foto original da câmera/galeria pode ser apagada sem afetar o ponto).
+ *
+ * As telas nunca acessam o AsyncStorage diretamente: chamam estas funções (CRUD).
+ * Observação didática: a senha é guardada em texto puro porque a autenticação é local e
+ * acadêmica; num produto real usaríamos um backend (ex.: Firebase Auth) ou hash + SecureStore.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 

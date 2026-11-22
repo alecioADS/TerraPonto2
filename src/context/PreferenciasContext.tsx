@@ -1,3 +1,14 @@
+/**
+ * Contexto de preferências do usuário (estado global persistido).
+ *
+ * - formato: como as coordenadas aparecem (GMS, Decimal ou UTM) — usado na coleta, na
+ *   lista e no detalhe do ponto;
+ * - camadaMapa: imagem de fundo do mapa (satélite ou ruas).
+ * Trocar em qualquer tela atualiza todas (Context API) e a escolha fica salva no
+ * AsyncStorage para a próxima vez que o app abrir.
+ *
+ * Hooks: createContext/useContext, useState e useEffect (ler as preferências salvas).
+ */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

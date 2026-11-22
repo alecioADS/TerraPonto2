@@ -1,3 +1,13 @@
+/**
+ * Tela de Login (View).
+ *
+ * Formulário de e-mail e senha com validação local antes de consultar o Model
+ * (`autenticar` em services/storage.ts). Se der certo, chama `entrar()` do AuthContext,
+ * e as rotas trocam sozinhas para a Home.
+ *
+ * Hooks: useState (campos, erro, carregando, mostrar senha) e useRef (pular do e-mail
+ * para a senha ao apertar "próximo" no teclado, sem re-renderizar a tela).
+ */
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -25,8 +35,9 @@ export default function Login({ navigation }: ScreenProps<'Login'>) {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const senhaRef = useRef<TextInput>(null);
+  const senhaRef = useRef<TextInput>(null); // referência direta ao campo de senha (dar foco)
 
+  // Valida o formulário e tenta autenticar
   async function handleEntrar() {
     const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
@@ -110,6 +121,7 @@ export default function Login({ navigation }: ScreenProps<'Login'>) {
               </Pressable>
             </View>
 
+            {/* Mensagem de erro de validação ou de autenticação */}
             {erro ? <Text style={styles.error}>{erro}</Text> : null}
 
             <Pressable

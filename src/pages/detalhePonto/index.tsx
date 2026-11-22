@@ -1,3 +1,15 @@
+/**
+ * Tela de detalhe do ponto (View) — FORMULÁRIO de edição e o "R", "U" e "D" do CRUD.
+ *
+ * Mostra as coordenadas coletadas (somente leitura, no formato GMS/Decimal/UTM escolhido),
+ * altitude, precisão e hora da coleta. Permite editar nome, tipo, responsável e
+ * observações, tirar/escolher foto (expo-image-picker), recoletar a localização, abrir no
+ * mapa, ver o histórico de recoletas e excluir o ponto.
+ *
+ * Hooks: useState (campos), useRef (foco, fotos pendentes, formulário já carregado),
+ * useCallback + useFocusEffect (recarregar ao voltar da recoleta) e useEffect (apagar
+ * fotos tiradas e não salvas quando o usuário sai da tela).
+ */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -37,8 +49,6 @@ import {
   TipoPonto,
 } from '../../services/storage';
 
-// Página do ponto: mostra as coordenadas coletadas (somente leitura)
-// e permite editar os detalhes, anexar foto e excluir (CRUD).
 export default function DetalhePonto({ navigation, route }: ScreenProps<'DetalhePonto'>) {
   const { id, novo } = route.params;
   const { usuario } = useAuth();

@@ -1,3 +1,10 @@
+/**
+ * Componente Botao — botão padrão reutilizável do TerraPonto.
+ *
+ * Variantes "primario" (laranja, ação principal) e "secundario" (contorno azul). Com
+ * `carregando`, mostra um indicador e fica desabilitado (evita toque duplo ao salvar).
+ * Altura mínima de 52 dp: fácil de tocar com luva/dedo em campo.
+ */
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 
@@ -11,7 +18,6 @@ interface Props {
   style?: ViewStyle;
 }
 
-// Botão padrão do TerraPonto
 export function Botao({ titulo, onPress, carregando = false, variante = 'primario', style }: Props) {
   const secundario = variante === 'secundario';
 

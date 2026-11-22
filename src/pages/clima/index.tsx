@@ -1,3 +1,14 @@
+/**
+ * Tela de Clima (View) — consumo de API REST (requisito do trabalho).
+ *
+ * Busca na API pública Open-Meteo (sem chave) o tempo atual e a previsão de 7 dias para
+ * a cidade escolhida — ou para a coordenada de um ponto, quando aberta a partir dele.
+ * Trata os três estados de uma requisição: carregando, erro (com "Tentar novamente") e
+ * sucesso. A lista de cidades é uma FlatList horizontal.
+ *
+ * Hooks: useState (local, dados, carregando, erro, tentativa) e useEffect com dependências
+ * [local, tentativa] — refaz a busca ao trocar de cidade ou ao tentar de novo.
+ */
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,6 +32,7 @@ interface Local {
   longitude: number;
 }
 
+// Cidades sugeridas (região do Triângulo Mineiro e capitais próximas)
 const CIDADES: Local[] = [
   { nome: 'Araguari', latitude: -18.6486, longitude: -48.1934 },
   { nome: 'Uberlândia', latitude: -18.9186, longitude: -48.2772 },
@@ -39,7 +51,7 @@ export default function Clima({ route }: ScreenProps<'Clima'>) {
   const [clima, setClima] = useState<RespostaClima | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [tentativa, setTentativa] = useState(0);
+  const [tentativa, setTentativa] = useState(0); // incrementar = refazer a requisição
 
   // useEffect com dependências: busca de novo sempre que o local muda
   useEffect(() => {

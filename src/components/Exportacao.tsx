@@ -1,3 +1,14 @@
+/**
+ * Exportação (camada de apresentação): menu, aviso de "gerando..." e escolha do destino.
+ *
+ * Expõe o HOOK PERSONALIZADO `useExportacao()` — funciona como um pequeno ViewModel: guarda
+ * o estado (menu aberto, exportando) e as ações, e devolve `elementos` (o Modal) para a
+ * tela renderizar. Assim "Meus pontos" e "Áreas" reaproveitam o mesmo fluxo.
+ * A geração dos arquivos (CSV, KML, ZIP) fica no Model: services/exportacao.ts.
+ *
+ * Fluxo: menu (ZIP completo / KML / CSV) → gera o arquivo → "Compartilhar" ou
+ * "Salvar no aparelho".
+ */
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 

@@ -1,4 +1,14 @@
-// Integrações com APIs externas (gratuitas e sem chave)
+/**
+ * Integrações com APIs externas (Model / serviço) — requisito "usar uma API" do trabalho.
+ *
+ * - Open-Meteo (GET): clima atual + previsão de 7 dias por latitude/longitude.
+ *   https://open-meteo.com — gratuita, sem cadastro e sem chave.
+ * - JSONPlaceholder (POST): simula o envio do formulário "Fale conosco" e devolve um id,
+ *   usado como número de protocolo. https://jsonplaceholder.typicode.com
+ *
+ * Usa o `fetch` nativo; as respostas são convertidas para tipos próprios em português,
+ * assim as telas não dependem do formato da API.
+ */
 
 export interface ClimaAtual {
   temperatura: number;

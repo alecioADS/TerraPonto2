@@ -1,3 +1,12 @@
+/**
+ * Exibição de coordenadas nos três formatos do app: GMS (graus, minutos e segundos),
+ * Decimal e UTM (Leste/Norte em metros, com zona e meridiano central).
+ *
+ * - linhasCoordenada / textoCoordenada: funções puras que formatam para a tela;
+ * - SeletorFormato: a "chave" GMS | Decimal | UTM. A escolha vai para o
+ *   PreferenciasContext, então vale para todas as telas e fica salva no aparelho.
+ * A conversão UTM em si está no Model (services/geodesia.ts → paraUtm).
+ */
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 

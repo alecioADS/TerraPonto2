@@ -1,3 +1,12 @@
+/**
+ * Tela Home (View) — painel inicial depois do login.
+ *
+ * Mostra a saudação, um resumo (quantidade de pontos e de áreas) e o menu em grade com
+ * as funcionalidades. Os contadores vêm do Model (services/storage e services/poligonos).
+ *
+ * Hooks: useState (contadores), useCallback + useFocusEffect (recarregar os contadores
+ * sempre que a Home volta a aparecer, por exemplo depois de coletar um ponto).
+ */
 import React, { useCallback, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,6 +26,7 @@ interface ItemMenu {
   descricao: string;
 }
 
+// Itens do menu: a grade é gerada a partir deste array (adicionar uma tela = 1 linha aqui)
 const MENU: ItemMenu[] = [
   { rota: 'NovoPonto', icone: '🛰️', titulo: 'Coletar ponto', descricao: 'Usar o GPS do aparelho' },
   { rota: 'MeusPontos', icone: '🗂️', titulo: 'Meus pontos', descricao: 'Lista do levantamento' },
@@ -40,6 +50,7 @@ export default function Home({ navigation }: ScreenProps<'Home'>) {
     }, [usuario]),
   );
 
+  // Pede confirmação antes de encerrar a sessão (sair() volta para as rotas públicas)
   function confirmarSaida() {
     Alert.alert('Sair', 'Deseja realmente sair da sua conta?', [
       { text: 'Cancelar', style: 'cancel' },
