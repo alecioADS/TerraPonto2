@@ -3,7 +3,9 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import JSZip from 'jszip';
 
-import { gerarCsv, leiaMe, nomeFoto } from './csv';
+import { gerarCsv, gerarCsvAreas, leiaMe, nomeFoto } from './csv';
+import { gerarKml } from './kml';
+import { Poligono } from './poligonos';
 import { Ponto } from './storage';
 
 export interface ArquivoExportado {
@@ -36,9 +38,22 @@ export async function gerarArquivoCsv(pontos: Ponto[]): Promise<ArquivoExportado
   return { uri, nome, mimeType: 'text/csv', fotos: 0, faltando: 0 };
 }
 
-// Gera um ZIP com o CSV + pasta de fotos + LEIA-ME
-export async function gerarArquivoZip(pontos: Ponto[]): Promise<ArquivoExportado> {
-  if (pontos.length === 0) throw new Error('Não há pontos para exportar.');
+// Gera um KML com pontos e áreas (Google Earth / QGIS)
+export async function gerarArquivoKml(pontos: Ponto[], areas: Poligono[]): Promise<ArquivoExportado> {
+  if (pontos.length === 0 && areas.length === 0) throw new Error('Não há pontos nem áreas para exportar.');
+
+  const agora = new Date();
+  const nome = `terraponto_${carimbo(agora)}.kml`;
+  const uri = `${FileSystem.cacheDirectory}${nome}`;
+  await FileSystem.writeAsStringAsync(uri, gerarKml(pontos, areas, `TerraPonto ${agora.toLocaleDateString('pt-BR')}`), {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+  return { uri, nome, mimeType: 'application/vnd.google-earth.kml+xml', fotos: 0, faltando: 0 };
+}
+
+// Gera um ZIP com pontos.csv + areas.csv + KML + pasta de fotos + LEIA-ME
+export async function gerarArquivoZip(pontos: Ponto[], areas: Poligono[] = []): Promise<ArquivoExportado> {
+  if (pontos.length === 0 && areas.length === 0) throw new Error('Não há pontos nem áreas para exportar.');
 
   const agora = new Date();
   const zip = new JSZip();
@@ -60,7 +75,9 @@ export async function gerarArquivoZip(pontos: Ponto[]): Promise<ArquivoExportado
   }
 
   zip.file('pontos.csv', gerarCsv(pontos, true));
-  zip.file('LEIA-ME.txt', leiaMe(pontos.length, fotos, agora));
+  if (areas.length > 0) zip.file('areas.csv', gerarCsvAreas(areas));
+  zip.file('terraponto.kml', gerarKml(pontos, areas, `TerraPonto ${agora.toLocaleDateString('pt-BR')}`));
+  zip.file('LEIA-ME.txt', leiaMe(pontos.length, fotos, agora, areas.length));
 
   // JPG já é comprimido: "STORE" evita gastar CPU/bateria sem ganho de tamanho
   const conteudo = await zip.generateAsync({ type: 'base64', compression: 'STORE' });

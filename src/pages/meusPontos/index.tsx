@@ -20,14 +20,7 @@ import { colors } from '../../global/colors';
 import { classificarPrecisao, formatarDataHora, ICONE_TIPO } from '../../global/formatos';
 import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
-import {
-  ArquivoExportado,
-  Destino,
-  entregarArquivo,
-  gerarArquivoCsv,
-  gerarArquivoZip,
-  podeSalvarNoAparelho,
-} from '../../services/exportacao';
+import { BotaoExportar, useExportacao } from '../../components/Exportacao';
 import { excluirPonto, listarPontos, Ponto } from '../../services/storage';
 
 export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
@@ -36,7 +29,7 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
   const [pontos, setPontos] = useState<Ponto[]>([]);
   const [busca, setBusca] = useState('');
   const [carregando, setCarregando] = useState(true);
-  const [exportando, setExportando] = useState<string | null>(null);
+  const { iniciar: iniciarExportacao, elementos: elementosExportacao } = useExportacao();
 
   const carregar = useCallback(async () => {
     if (!usuario) return;
@@ -66,71 +59,9 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
     ]);
   }
 
-  // Pergunta para onde enviar o arquivo já gerado
-  function escolherDestino(arquivo: ArquivoExportado): Promise<Destino | null> {
-    if (!podeSalvarNoAparelho) return Promise.resolve('compartilhar');
-    const aviso =
-      arquivo.faltando > 0 ? `\n\n⚠️ ${arquivo.faltando} foto(s) não foram encontradas e ficaram de fora.` : '';
-    return new Promise((resolve) =>
-      Alert.alert(
-        'Arquivo pronto',
-        `${arquivo.nome}${arquivo.mimeType === 'application/zip' ? `\n${arquivo.fotos} foto(s) incluída(s).` : ''}${aviso}`,
-        [
-          { text: 'Cancelar', style: 'cancel', onPress: () => resolve(null) },
-          { text: 'Salvar no aparelho', onPress: () => resolve('salvar') },
-          { text: 'Compartilhar', onPress: () => resolve('compartilhar') },
-        ],
-        { cancelable: true, onDismiss: () => resolve(null) },
-      ),
-    );
-  }
-
-  async function executarExportacao(tipo: 'csv' | 'zip') {
-    setExportando(tipo === 'csv' ? 'Gerando planilha CSV...' : 'Compactando pontos e fotos...');
-    try {
-      const arquivo = tipo === 'csv' ? await gerarArquivoCsv(pontos) : await gerarArquivoZip(pontos);
-      setExportando(null);
-
-      const destino = await escolherDestino(arquivo);
-      if (!destino) return;
-
-      const concluido = await entregarArquivo(arquivo, destino);
-      if (concluido && destino === 'salvar') {
-        Alert.alert('Arquivo salvo', `${arquivo.nome} foi salvo na pasta escolhida.`);
-      }
-    } catch (e) {
-      Alert.alert('Não foi possível exportar', (e as Error).message);
-    } finally {
-      setExportando(null);
-    }
-  }
-
-  function escolherExportacao() {
-    if (pontos.length === 0) {
-      Alert.alert('Nada para exportar', 'Registre pelo menos um ponto antes de exportar.');
-      return;
-    }
-    const comFoto = pontos.filter((p) => p.fotoUri).length;
-    Alert.alert(
-      'Exportar pontos',
-      `${pontos.length} ${pontos.length === 1 ? 'ponto' : 'pontos'} • ${comFoto} com foto.\nEscolha o formato:`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Somente CSV', onPress: () => executarExportacao('csv') },
-        { text: 'CSV + fotos (ZIP)', onPress: () => executarExportacao('zip') },
-      ],
-    );
-  }
-
-  // Botão "Exportar" no cabeçalho da tela
+  // Botão "Exportar" no cabeçalho da tela (pontos, áreas, KML e fotos)
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={escolherExportacao} hitSlop={10} style={styles.botaoExportar}>
-          <Text style={styles.botaoExportarTexto}>⬇️ Exportar</Text>
-        </Pressable>
-      ),
-    });
+    navigation.setOptions({ headerRight: () => <BotaoExportar onPress={iniciarExportacao} /> });
   });
 
   const termo = busca.trim().toLowerCase();
@@ -232,48 +163,12 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
         <Botao titulo="🛰️  Coletar novo ponto" onPress={() => navigation.navigate('NovoPonto')} />
       </View>
 
-      {exportando && (
-        <View style={styles.sobreposicao}>
-          <View style={styles.caixaExportando}>
-            <ActivityIndicator size="large" color={colors.laranjaMarco} />
-            <Text style={styles.textoExportando}>{exportando}</Text>
-          </View>
-        </View>
-      )}
+      {elementosExportacao}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  botaoExportar: {
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-  },
-  botaoExportarTexto: {
-    color: colors.laranjaMarco,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  sobreposicao: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
-  },
-  caixaExportando: {
-    alignItems: 'center',
-    backgroundColor: colors.brancoMineral,
-    borderRadius: 16,
-    padding: 24,
-    width: '75%',
-  },
-  textoExportando: {
-    color: colors.azulGnss,
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 12,
-    textAlign: 'center',
-  },
   busca: {
     backgroundColor: colors.branco,
     borderRadius: 10,

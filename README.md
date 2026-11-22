@@ -58,13 +58,20 @@ Obs.: no Expo Go (nova arquitetura), marcadores com texto do `react-native-maps`
 saem cortados no Android; por isso nomes e etiquetas são desenhados numa camada
 sobre o mapa, posicionada pela projeção Web Mercator.
 
-### Exportar (CSV e ZIP com fotos)
+### Exportar (CSV, KML e ZIP com fotos)
 
-Em *Meus pontos*, o botão **⬇️ Exportar** gera:
+Em *Meus pontos* ou em *Áreas*, o botão **⬇️ Exportar** abre um menu com:
 
-- **Somente CSV** – `terraponto_pontos_AAAAMMDD_HHMM.csv`
-- **CSV + fotos (ZIP)** – `terraponto_exportacao_AAAAMMDD_HHMM.zip` com
-  `pontos.csv`, a pasta `fotos/` (ex.: `P001_divisa-norte-cerca.jpg`) e um `LEIA-ME.txt`
+- **Completo (ZIP)** – `terraponto_exportacao_AAAAMMDD_HHMM.zip` com `pontos.csv`,
+  `areas.csv`, `terraponto.kml`, a pasta `fotos/` (ex.: `P001_divisa-norte-cerca.jpg`)
+  e um `LEIA-ME.txt`
+- **Google Earth (KML)** – pontos e áreas com nomes, descrições e as cores escolhidas
+  (abre no Google Earth, Google My Maps e QGIS)
+- **Pontos (CSV)** – `terraponto_pontos_AAAAMMDD_HHMM.csv`
+
+`areas.csv`: `codigo; nome; area_m2; area_ha; alqueire_mineiro; perimetro_m; vertices;
+cor; observacoes; criado_em; atualizado_em; wkt` — a coluna `wkt` traz o polígono em
+Well-Known Text, que o QGIS carrega direto como geometria.
 
 Depois de gerar, o usuário escolhe **Compartilhar** (WhatsApp, e-mail, Drive...) ou
 **Salvar no aparelho** (seletor de pastas do Android).

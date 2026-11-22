@@ -107,15 +107,70 @@ export function gerarCsv(pontos: PontoExportavel[], comFotos: boolean): string {
   return '﻿' + [CABECALHO.join(SEPARADOR), ...linhas].join('\r\n') + '\r\n';
 }
 
-export function leiaMe(total: number, fotos: number, geradoEm: Date): string {
+export interface AreaExportavel {
+  nome: string;
+  observacoes: string;
+  cor: string;
+  vertices: { latitude: number; longitude: number }[];
+  areaM2: number;
+  perimetroM: number;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+const CABECALHO_AREAS = [
+  'codigo',
+  'nome',
+  'area_m2',
+  'area_ha',
+  'alqueire_mineiro',
+  'perimetro_m',
+  'vertices',
+  'cor',
+  'observacoes',
+  'criado_em',
+  'atualizado_em',
+  'wkt',
+];
+
+// CSV das áreas. A coluna "wkt" traz o polígono em Well-Known Text (lon lat),
+// formato que o QGIS lê direto como geometria.
+export function gerarCsvAreas(areas: AreaExportavel[]): string {
+  const linhas = areas.map((a, i) => {
+    const anel = [...a.vertices, a.vertices[0]]
+      .map((v) => `${v.longitude.toFixed(8)} ${v.latitude.toFixed(8)}`)
+      .join(', ');
+    return [
+      `A${String(i + 1).padStart(3, '0')}`,
+      a.nome,
+      a.areaM2.toFixed(2),
+      (a.areaM2 / 10000).toFixed(4),
+      (a.areaM2 / 48400).toFixed(4),
+      a.perimetroM.toFixed(2),
+      a.vertices.length,
+      a.cor,
+      a.observacoes,
+      isoLocal(a.criadoEm),
+      isoLocal(a.atualizadoEm),
+      `POLYGON((${anel}))`,
+    ]
+      .map(campo)
+      .join(SEPARADOR);
+  });
+  return '﻿' + [CABECALHO_AREAS.join(SEPARADOR), ...linhas].join('\r\n') + '\r\n';
+}
+
+export function leiaMe(total: number, fotos: number, geradoEm: Date, areas = 0): string {
   return [
     'TerraPonto - Exportação de pontos de campo',
     `Gerado em: ${geradoEm.toLocaleString('pt-BR')}`,
-    `Pontos: ${total} | Fotos: ${fotos}`,
+    `Pontos: ${total} | Áreas: ${areas} | Fotos: ${fotos}`,
     '',
     'Conteúdo:',
-    '  pontos.csv  -> uma linha por ponto (separador ";", codificação UTF-8)',
-    '  fotos/      -> fotos dos pontos; a coluna "foto" do CSV indica o arquivo',
+    '  pontos.csv      -> uma linha por ponto (separador ";", codificação UTF-8)',
+    '  areas.csv       -> uma linha por área, com a geometria em WKT (coluna "wkt")',
+    '  terraponto.kml  -> pontos e áreas com nomes e cores (abre no Google Earth e no QGIS)',
+    '  fotos/          -> fotos dos pontos; a coluna "foto" do CSV indica o arquivo',
     '',
     'Coordenadas:',
     '  latitude/longitude em graus decimais (WGS84 ~ SIRGAS 2000, ponto como separador decimal)',

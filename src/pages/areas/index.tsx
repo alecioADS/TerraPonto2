@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { useFocusEffect } from '@react-navigation/native';
 
 import { Botao } from '../../components/Botao';
+import { BotaoExportar, useExportacao } from '../../components/Exportacao';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../global/colors';
 import { formatarArea, formatarDistancia, numeroBR } from '../../global/formatos';
@@ -16,6 +17,7 @@ export default function Areas({ navigation }: ScreenProps<'Areas'>) {
   const { usuario } = useAuth();
   const [areas, setAreas] = useState<Poligono[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const { iniciar: iniciarExportacao, elementos: elementosExportacao } = useExportacao();
 
   useFocusEffect(
     useCallback(() => {
@@ -30,12 +32,15 @@ export default function Areas({ navigation }: ScreenProps<'Areas'>) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('Mapa')} hitSlop={10}>
-          <Text style={styles.headerBotao}>🗺️ Mapa</Text>
-        </Pressable>
+        <View style={styles.headerAcoes}>
+          <Pressable onPress={() => navigation.navigate('Mapa')} hitSlop={10}>
+            <Text style={styles.headerBotao}>🗺️ Mapa</Text>
+          </Pressable>
+          <BotaoExportar onPress={iniciarExportacao} />
+        </View>
       ),
     });
-  }, [navigation]);
+  });
 
   if (carregando) {
     return (
@@ -99,11 +104,17 @@ export default function Areas({ navigation }: ScreenProps<'Areas'>) {
       <View style={styles.rodape}>
         <Botao titulo="✏️  Desenhar nova área" onPress={() => navigation.navigate('Mapa', { novoDesenho: true })} />
       </View>
+      {elementosExportacao}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerAcoes: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 14,
+  },
   headerBotao: {
     color: colors.laranjaMarco,
     fontSize: 15,
