@@ -2,26 +2,35 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type FormatoCoordenada = 'gms' | 'decimal' | 'utm';
+export type CamadaMapa = 'satelite' | 'ruas';
 
 const CHAVE_FORMATO = '@terraponto:formatoCoordenada';
+const CHAVE_CAMADA = '@terraponto:camadaMapa';
 
 interface PreferenciasData {
   formato: FormatoCoordenada;
   setFormato: (formato: FormatoCoordenada) => void;
+  camadaMapa: CamadaMapa;
+  setCamadaMapa: (camada: CamadaMapa) => void;
 }
 
 const PreferenciasContext = createContext<PreferenciasData>({
   formato: 'gms',
   setFormato: () => {},
+  camadaMapa: 'satelite',
+  setCamadaMapa: () => {},
 });
 
-// Guarda o formato de coordenada escolhido pelo usuário (vale para todas as telas)
+// Preferências do usuário que valem para todas as telas (formato de coordenada e
+// imagem de fundo do mapa), guardadas no aparelho.
 export function PreferenciasProvider({ children }: { children: React.ReactNode }) {
   const [formato, setFormatoState] = useState<FormatoCoordenada>('gms');
+  const [camadaMapa, setCamadaState] = useState<CamadaMapa>('satelite');
 
   useEffect(() => {
-    AsyncStorage.getItem(CHAVE_FORMATO).then((valor) => {
-      if (valor === 'gms' || valor === 'decimal' || valor === 'utm') setFormatoState(valor);
+    AsyncStorage.multiGet([CHAVE_FORMATO, CHAVE_CAMADA]).then(([[, f], [, c]]) => {
+      if (f === 'gms' || f === 'decimal' || f === 'utm') setFormatoState(f);
+      if (c === 'satelite' || c === 'ruas') setCamadaState(c);
     });
   }, []);
 
@@ -30,8 +39,13 @@ export function PreferenciasProvider({ children }: { children: React.ReactNode }
     AsyncStorage.setItem(CHAVE_FORMATO, novo);
   }
 
+  function setCamadaMapa(nova: CamadaMapa) {
+    setCamadaState(nova);
+    AsyncStorage.setItem(CHAVE_CAMADA, nova);
+  }
+
   return (
-    <PreferenciasContext.Provider value={{ formato, setFormato }}>
+    <PreferenciasContext.Provider value={{ formato, setFormato, camadaMapa, setCamadaMapa }}>
       {children}
     </PreferenciasContext.Provider>
   );

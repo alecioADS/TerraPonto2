@@ -13,7 +13,7 @@ export function formatarDataHora(iso: string): string {
   });
 }
 
-// Converte graus decimais para graus, minutos e segundos (ex.: 18°38'55.0"S)
+// Converte graus decimais para graus, minutos e segundos (ex.: 18°38'55,0"S)
 export function paraGMS(valor: number, eixo: 'lat' | 'lon'): string {
   const hemisferio = eixo === 'lat' ? (valor < 0 ? 'S' : 'N') : valor < 0 ? 'O' : 'L';
   const abs = Math.abs(valor);
@@ -21,8 +21,12 @@ export function paraGMS(valor: number, eixo: 'lat' | 'lon'): string {
   const minutosDec = (abs - graus) * 60;
   const minutos = Math.floor(minutosDec);
   const segundos = (minutosDec - minutos) * 60;
-  return `${graus}°${String(minutos).padStart(2, '0')}'${segundos.toFixed(1).padStart(4, '0')}"${hemisferio}`;
+  const seg = segundos.toFixed(1).padStart(4, '0').replace('.', ',');
+  return `${graus}°${String(minutos).padStart(2, '0')}'${seg}"${hemisferio}`;
 }
+
+/** Distância/altura em metros com vírgula decimal (ex.: "950,0 m"). */
+export const metrosBR = (valor: number, casas = 1) => `${numeroBR(valor, casas)} m`;
 
 // Semáforo de precisão (sempre com ícone + texto + cor)
 export function classificarPrecisao(precisao: number | null) {

@@ -6,12 +6,15 @@
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": false,
     "splash": {
       "image": "./src/assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F8FAF5"
     },
     "android": {
+      "package": "com.terraponto.app",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#F8FAF5"
@@ -26,6 +29,7 @@
       "supportsTablet": true
     },
     "plugins": [
+      "@maplibre/maplibre-react-native",
       [
         "expo-location",
         {

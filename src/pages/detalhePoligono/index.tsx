@@ -10,13 +10,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Polygon } from 'react-native-maps';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { Botao } from '../../components/Botao';
 import { CampoTexto } from '../../components/CampoTexto';
-import { MapaSatelite } from '../../components/MapaSatelite';
+import { MapaBase, MapaBaseRef, regiaoPara } from '../../components/mapa';
 import { useAuth } from '../../context/AuthContext';
+import { usePreferencias } from '../../context/PreferenciasContext';
 import { colors } from '../../global/colors';
 import { formatarDataHora, formatarDistancia, numeroBR } from '../../global/formatos';
 import { globalStyles } from '../../global/styles';
@@ -38,7 +38,8 @@ import {
 export default function DetalhePoligono({ navigation, route }: ScreenProps<'DetalhePoligono'>) {
   const { id, novo } = route.params;
   const { usuario } = useAuth();
-  const mapaRef = useRef<MapView>(null);
+  const mapaRef = useRef<MapaBaseRef>(null);
+  const { camadaMapa } = usePreferencias();
 
   const [poligono, setPoligono] = useState<Poligono | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -67,12 +68,10 @@ export default function DetalhePoligono({ navigation, route }: ScreenProps<'Deta
           navigation.setOptions({ title: encontrado.nome });
         }
         if (encontrado) {
+          // reenquadra ao voltar da edição de vértices (a região inicial só vale na montagem)
           setTimeout(
             () =>
-              mapaRef.current?.fitToCoordinates(encontrado.vertices, {
-                edgePadding: { top: 30, right: 30, bottom: 30, left: 30 },
-                animated: false,
-              }),
+              mapaRef.current?.enquadrar(encontrado.vertices, { top: 30, right: 30, bottom: 30, left: 30 }, false),
             300,
           );
         }
@@ -155,21 +154,13 @@ export default function DetalhePoligono({ navigation, route }: ScreenProps<'Deta
         {/* Prévia no mapa (toque para abrir no mapa grande) */}
         <Pressable onPress={() => navigation.navigate('Mapa', { focoPoligonoId: poligono.id })}>
           <View style={styles.previa} pointerEvents="none">
-            <MapaSatelite
+            <MapaBase
               ref={mapaRef}
-              initialRegion={{
-                latitude: poligono.vertices[0].latitude,
-                longitude: poligono.vertices[0].longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-            >
-              <Polygon coordinates={poligono.vertices} strokeColor={cor} strokeWidth={3} fillColor={`${cor}55`} />
-            </MapaSatelite>
+              regiaoInicial={regiaoPara(poligono.vertices, 1.3)}
+              camadaBase={camadaMapa}
+              areas={[{ id: poligono.id, vertices: poligono.vertices, cor, destaque: true }]}
+              interativo={false}
+            />
           </View>
           <Text style={styles.previaDica}>Toque para abrir no mapa</Text>
         </Pressable>

@@ -7,10 +7,11 @@ import { formatarMetros, linhasCoordenada, SeletorFormato, textoCoordenada } fro
 import { useAuth } from '../../context/AuthContext';
 import { usePreferencias } from '../../context/PreferenciasContext';
 import { colors } from '../../global/colors';
-import { classificarPrecisao, formatarDataHora } from '../../global/formatos';
+import { classificarPrecisao, formatarDataHora, metrosBR } from '../../global/formatos';
 import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
 import { azimuteGraus, distanciaMetros } from '../../services/geodesia';
+import { permissaoLocalizacao } from '../../services/permissoes';
 import { criarPonto, obterPonto, Ponto, recoletarPonto } from '../../services/storage';
 
 type Status = 'pedindo' | 'negado' | 'buscando' | 'ativo' | 'erro';
@@ -43,9 +44,9 @@ export default function NovoPonto({ navigation, route }: ScreenProps<'NovoPonto'
 
     async function iniciarGps() {
       setStatus('pedindo');
-      const { status: permissao } = await Location.requestForegroundPermissionsAsync();
+      const permitido = await permissaoLocalizacao();
       if (!ativo) return;
-      if (permissao !== 'granted') {
+      if (!permitido) {
         setStatus('negado');
         return;
       }
@@ -95,7 +96,7 @@ export default function NovoPonto({ navigation, route }: ScreenProps<'NovoPonto'
       const continuar = await new Promise<boolean>((resolve) =>
         Alert.alert(
           'Precisão baixa',
-          `A precisão atual é de ±${precisao.toFixed(1)} m. Deseja registrar mesmo assim?`,
+          `A precisão atual é de ±${metrosBR(precisao)}. Deseja registrar mesmo assim?`,
           [
             { text: 'Aguardar', style: 'cancel', onPress: () => resolve(false) },
             { text: 'Registrar', onPress: () => resolve(true) },
@@ -224,11 +225,11 @@ export default function NovoPonto({ navigation, route }: ScreenProps<'NovoPonto'
         <View style={styles.linha}>
           <View style={styles.bloco}>
             <Text style={styles.rotulo}>ALTITUDE</Text>
-            <Text style={styles.valorMenor}>{altitude != null ? `${altitude.toFixed(1)} m` : '—'}</Text>
+            <Text style={styles.valorMenor}>{altitude != null ? metrosBR(altitude) : '—'}</Text>
           </View>
           <View style={styles.bloco}>
             <Text style={styles.rotulo}>PRECISÃO</Text>
-            <Text style={styles.valorMenor}>{accuracy != null ? `±${accuracy.toFixed(1)} m` : '—'}</Text>
+            <Text style={styles.valorMenor}>{accuracy != null ? `±${metrosBR(accuracy)}` : '—'}</Text>
           </View>
         </View>
       </View>
@@ -249,7 +250,7 @@ export default function NovoPonto({ navigation, route }: ScreenProps<'NovoPonto'
           </Text>
           <Text style={styles.recoletaTexto}>
             Coletada em {formatarDataHora(pontoOriginal.coletadoEm)}
-            {pontoOriginal.precisao != null ? ` • ±${pontoOriginal.precisao.toFixed(1)} m` : ''}
+            {pontoOriginal.precisao != null ? ` • ±${metrosBR(pontoOriginal.precisao)}` : ''}
           </Text>
           <View style={styles.deslocamento}>
             <View style={{ flex: 1 }}>

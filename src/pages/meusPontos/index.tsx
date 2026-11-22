@@ -17,7 +17,7 @@ import { SeletorFormato, textoCoordenada } from '../../components/Coordenadas';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferencias } from '../../context/PreferenciasContext';
 import { colors } from '../../global/colors';
-import { classificarPrecisao, formatarDataHora, ICONE_TIPO } from '../../global/formatos';
+import { classificarPrecisao, formatarDataHora, ICONE_TIPO, metrosBR } from '../../global/formatos';
 import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
 import { BotaoExportar, useExportacao } from '../../components/Exportacao';
@@ -145,7 +145,7 @@ export default function MeusPontos({ navigation }: ScreenProps<'MeusPontos'>) {
                 <View style={styles.rodape}>
                   <Text style={styles.data}>🕒 {formatarDataHora(item.coletadoEm)}</Text>
                   <Text style={[styles.precisao, { color: semaforo.cor }]}>
-                    {item.precisao != null ? `±${item.precisao.toFixed(1)} m` : ''}
+                    {item.precisao != null ? `±${metrosBR(item.precisao)}` : ''}
                   </Text>
                 </View>
               </View>

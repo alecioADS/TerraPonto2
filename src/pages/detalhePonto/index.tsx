@@ -21,10 +21,11 @@ import { formatarMetros, linhasCoordenada, SeletorFormato, textoCoordenada } fro
 import { useAuth } from '../../context/AuthContext';
 import { usePreferencias } from '../../context/PreferenciasContext';
 import { colors } from '../../global/colors';
-import { classificarPrecisao, formatarDataHora, ICONE_TIPO } from '../../global/formatos';
+import { classificarPrecisao, formatarDataHora, ICONE_TIPO, metrosBR } from '../../global/formatos';
 import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
 import { distanciaMetros } from '../../services/geodesia';
+import { permissaoCamera, permissaoGaleria } from '../../services/permissoes';
 import {
   atualizarPonto,
   excluirArquivo,
@@ -99,12 +100,9 @@ export default function DetalhePonto({ navigation, route }: ScreenProps<'Detalhe
   }, []);
 
   async function escolherFoto(origem: 'camera' | 'galeria') {
-    const permissao =
-      origem === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permitido = origem === 'camera' ? await permissaoCamera() : await permissaoGaleria();
 
-    if (!permissao.granted) {
+    if (!permitido) {
       Alert.alert('Permissão necessária', 'Autorize o acesso para anexar fotos ao ponto.');
       return;
     }
@@ -235,12 +233,12 @@ export default function DetalhePonto({ navigation, route }: ScreenProps<'Detalhe
           <View style={styles.linhaCoord}>
             <View style={{ flex: 1 }}>
               <Text style={styles.rotulo}>Altitude</Text>
-              <Text style={styles.valor}>{ponto.altitude != null ? `${ponto.altitude.toFixed(1)} m` : '—'}</Text>
+              <Text style={styles.valor}>{ponto.altitude != null ? metrosBR(ponto.altitude) : '—'}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rotulo}>Precisão</Text>
               <Text style={[styles.valor, { color: semaforo.cor === colors.cinzaPrecisao ? colors.branco : semaforo.cor }]}>
-                {semaforo.icone} {ponto.precisao != null ? `±${ponto.precisao.toFixed(1)} m` : '—'}
+                {semaforo.icone} {ponto.precisao != null ? `±${metrosBR(ponto.precisao)}` : '—'}
               </Text>
             </View>
           </View>

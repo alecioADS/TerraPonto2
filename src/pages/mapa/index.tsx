@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import MapView, { MapPressEvent, Marker, Polygon, Polyline, Region } from 'react-native-maps';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 
-import { MapaSatelite } from '../../components/MapaSatelite';
+import { AreaMapa, MapaBase, MapaBaseRef, Regiao, regiaoPara } from '../../components/mapa';
 import { useAuth } from '../../context/AuthContext';
+import { usePreferencias } from '../../context/PreferenciasContext';
 import { colors } from '../../global/colors';
 import { formatarArea, formatarDistancia, numeroBR } from '../../global/formatos';
 import { ScreenProps } from '../../routes';
@@ -23,55 +23,32 @@ import {
   listarPoligonos,
   Poligono,
 } from '../../services/poligonos';
+import { permissaoLocalizacao } from '../../services/permissoes';
 import { listarPontos, Ponto } from '../../services/storage';
 
-const REGIAO_PADRAO: Region = { latitude: -18.6486, longitude: -48.1934, latitudeDelta: 0.05, longitudeDelta: 0.05 };
+const REGIAO_PADRAO: Regiao = { latitude: -18.6486, longitude: -48.1934, latitudeDelta: 0.05, longitudeDelta: 0.05 };
 const COR_DESENHO = colors.laranjaMarco;
-
-// '#RRGGBB' -> 'rgba(r,g,b,a)'
-function comAlpha(hex: string, alpha: number): string {
-  const n = parseInt(hex.replace('#', ''), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
-}
-
-// Região que enquadra todas as coordenadas, com uma folga nas bordas
-function regiaoPara(coords: LatLng[]): Region {
-  const lats = coords.map((c) => c.latitude);
-  const lons = coords.map((c) => c.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons);
-  const maxLon = Math.max(...lons);
-  return {
-    latitude: (minLat + maxLat) / 2,
-    longitude: (minLon + maxLon) / 2,
-    latitudeDelta: Math.max((maxLat - minLat) * 1.6, 0.004),
-    longitudeDelta: Math.max((maxLon - minLon) * 1.6, 0.004),
-  };
-}
+const MARGENS_MAPA = { top: 120, right: 80, bottom: 260, left: 80 };
 
 export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
   const params = route.params ?? {};
   const { usuario } = useAuth();
-  const mapaRef = useRef<MapView>(null);
+  const mapaRef = useRef<MapaBaseRef>(null);
 
   const [pontos, setPontos] = useState<Ponto[]>([]);
   const [poligonos, setPoligonos] = useState<Poligono[]>([]);
   const [carregado, setCarregado] = useState(false);
-  const [regiaoInicial, setRegiaoInicial] = useState<Region | null>(null);
-  const [regiaoAtual, setRegiaoAtual] = useState<Region | null>(null);
+  const [regiaoInicial, setRegiaoInicial] = useState<Regiao | null>(null);
+  const [regiaoAtual, setRegiaoAtual] = useState<Regiao | null>(null);
   const [tamanho, setTamanho] = useState({ largura: 0, altura: 0 });
   const [rotulos, setRotulos] = useState(false);
+  const { camadaMapa, setCamadaMapa } = usePreferencias();
   const [modo, setModo] = useState<'ver' | 'desenhar'>('ver');
   const [vertices, setVertices] = useState<LatLng[]>([]);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [selecionado, setSelecionado] = useState<Poligono | null>(null);
   const [buscandoGps, setBuscandoGps] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  // No Android com a nova arquitetura (Fabric), react-native-maps 1.20 corta os marcadores
-  // personalizados quando tracksViewChanges=false. Mantemos ligado: custo aceitável para
-  // dezenas de marcadores; para centenas, trocar por clustering.
-  const rastrear = true;
   const parametrosAplicados = useRef(false);
   const saindoSemPerguntar = useRef(false);
 
@@ -162,27 +139,14 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
       }
     } else if (params.focoPontoId) {
       const alvo = pontos.find((p) => p.id === params.focoPontoId);
-      if (alvo) {
-        mapaRef.current?.animateToRegion(
-          { latitude: alvo.latitude, longitude: alvo.longitude, latitudeDelta: 0.003, longitudeDelta: 0.003 },
-          600,
-        );
-      }
+      if (alvo) mapaRef.current?.irPara(alvo, 0.003);
     } else if (params.novoDesenho) {
       iniciarDesenho();
     }
   }
 
   function enquadrar(coords: LatLng[]) {
-    if (coords.length === 0) return;
-    if (coords.length === 1) {
-      mapaRef.current?.animateToRegion({ ...coords[0], latitudeDelta: 0.003, longitudeDelta: 0.003 }, 600);
-      return;
-    }
-    mapaRef.current?.fitToCoordinates(coords, {
-      edgePadding: { top: 120, right: 80, bottom: 260, left: 80 },
-      animated: true,
-    });
+    mapaRef.current?.enquadrar(coords, MARGENS_MAPA);
   }
 
   function enquadrarTudo() {
@@ -194,15 +158,11 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
 
   async function irParaMinhaPosicao() {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (!(await permissaoLocalizacao())) return;
       const pos =
         (await Location.getLastKnownPositionAsync()) ??
         (await Location.getCurrentPositionAsync({ mayShowUserSettingsDialog: false }));
-      mapaRef.current?.animateToRegion(
-        { latitude: pos.coords.latitude, longitude: pos.coords.longitude, latitudeDelta: 0.004, longitudeDelta: 0.004 },
-        600,
-      );
+      mapaRef.current?.irPara(pos.coords, 0.004);
     } catch {
       Alert.alert('Localização indisponível', 'Não foi possível obter sua posição agora.');
     }
@@ -243,8 +203,7 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
   async function verticeNoGps() {
     setBuscandoGps(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') throw new Error('Permissão de localização negada.');
+      if (!(await permissaoLocalizacao())) throw new Error('Permissão de localização negada.');
       let pos: Location.LocationObject;
       try {
         pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
@@ -255,7 +214,7 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
         });
       }
       adicionarVertice(pos.coords);
-      mapaRef.current?.animateCamera({ center: pos.coords }, { duration: 400 });
+      mapaRef.current?.centralizar(pos.coords);
     } catch (e) {
       Alert.alert('GPS', (e as Error).message || 'Não foi possível obter a posição.');
     } finally {
@@ -329,8 +288,8 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
     });
   }, [navigation, modo, editandoId]);
 
-  function aoTocarMapa(e: MapPressEvent) {
-    if (modo === 'desenhar') adicionarVertice(e.nativeEvent.coordinate);
+  function aoTocarMapa(c: LatLng) {
+    if (modo === 'desenhar') adicionarVertice(c);
     else setSelecionado(null);
   }
 
@@ -338,6 +297,23 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
     if (modo === 'desenhar') adicionarVertice({ latitude: p.latitude, longitude: p.longitude });
     else navigation.navigate('DetalhePonto', { id: p.id });
   }
+
+  // Dados do mapa memorizados: a tela re-renderiza a cada quadro durante o arrasto
+  // (regiaoAtual), e recriar as camadas a cada quadro deixaria o mapa lento.
+  const visiveis = useMemo(() => poligonos.filter((p) => p.id !== editandoId), [poligonos, editandoId]);
+  const areasMapa = useMemo<AreaMapa[]>(
+    () => visiveis.map((p) => ({ id: p.id, vertices: p.vertices, cor: p.cor, destaque: selecionado?.id === p.id })),
+    [visiveis, selecionado],
+  );
+  const pontosMapa = useMemo(
+    () => pontos.map((p) => ({ id: p.id, latitude: p.latitude, longitude: p.longitude })),
+    [pontos],
+  );
+  const cruzando = useMemo(() => temAutointersecao(vertices), [vertices]);
+  const desenhoMapa = useMemo(
+    () => (modo === 'desenhar' ? { vertices, cor: cruzando ? colors.vermelhoErro : COR_DESENHO } : null),
+    [modo, vertices, cruzando],
+  );
 
   // ---------- Renderização ----------
   if (!regiaoInicial) {
@@ -349,88 +325,42 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
     );
   }
 
-  const visiveis = poligonos.filter((p) => p.id !== editandoId);
   const areaDesenho = areaPoligono(vertices);
   const perimetroDesenho = perimetroPoligono(vertices, vertices.length >= 3);
-  const cruzando = temAutointersecao(vertices);
 
   return (
     <View style={styles.tela}>
-      <MapaSatelite
+      <MapaBase
         ref={mapaRef}
-        initialRegion={regiaoInicial}
-        onMapReady={aplicarParametros}
-        onPress={aoTocarMapa}
-        onRegionChange={setRegiaoAtual}
-        onRegionChangeComplete={setRegiaoAtual}
+        regiaoInicial={regiaoInicial}
+        areas={areasMapa}
+        pontos={pontosMapa}
+        desenho={desenhoMapa}
+        verticesEditaveis={modo === 'desenhar' ? vertices : undefined}
+        corVertices={COR_DESENHO}
+        camadaBase={camadaMapa}
+        mostrarRotulos={rotulos}
+        mostrarUsuario
+        onPronto={aplicarParametros}
+        onToque={aoTocarMapa}
+        onToqueArea={
+          modo === 'ver'
+            ? (id) => setSelecionado(poligonos.find((p) => p.id === id) ?? null)
+            : undefined
+        }
+        onToquePonto={(id) => {
+          const p = pontos.find((x) => x.id === id);
+          if (p) aoTocarPonto(p);
+        }}
+        onMoverVertice={moverVertice}
+        onRegiao={setRegiaoAtual}
         onLayout={(e) =>
           setTamanho({ largura: e.nativeEvent.layout.width, altura: e.nativeEvent.layout.height })
         }
-        mostrarRotulos={rotulos}
-        showsUserLocation
-        showsMyLocationButton={false}
-      >
-        {/* Áreas salvas */}
-        {visiveis.map((p) => {
-          const ativo = selecionado?.id === p.id;
-          return (
-            <Polygon
-              key={p.id}
-              coordinates={p.vertices}
-              strokeColor={p.cor}
-              strokeWidth={ativo ? 4 : 2}
-              fillColor={comAlpha(p.cor, ativo ? 0.45 : 0.22)}
-              tappable={modo === 'ver'}
-              onPress={() => setSelecionado(p)}
-            />
-          );
-        })}
+      />
 
-        {/* Pontos coletados: só o pino (tamanho fixo). O nome fica na camada de rótulos. */}
-        {pontos.map((p) => (
-          <Marker
-            key={`pt-${p.id}`}
-            coordinate={{ latitude: p.latitude, longitude: p.longitude }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={rastrear}
-            onPress={() => aoTocarPonto(p)}
-          >
-            <View style={styles.marcadorPino} />
-          </Marker>
-        ))}
-
-        {/* Desenho em andamento */}
-        {modo === 'desenhar' && vertices.length >= 3 && (
-          <Polygon
-            coordinates={vertices}
-            strokeColor={cruzando ? colors.vermelhoErro : COR_DESENHO}
-            strokeWidth={3}
-            fillColor={comAlpha(cruzando ? '#DC2626' : '#FF6A00', 0.25)}
-            tappable={false}
-          />
-        )}
-        {modo === 'desenhar' && vertices.length === 2 && (
-          <Polyline coordinates={vertices} strokeColor={COR_DESENHO} strokeWidth={3} />
-        )}
-        {modo === 'desenhar' &&
-          vertices.map((v, i) => (
-            <Marker
-              key={`v-${i}`}
-              coordinate={v}
-              anchor={{ x: 0.5, y: 0.5 }}
-              draggable
-              onDragEnd={(e) => moverVertice(i, e.nativeEvent.coordinate)}
-              tracksViewChanges={rastrear}
-            >
-              <View style={styles.vertice}>
-                <Text style={styles.verticeTexto}>{i + 1}</Text>
-              </View>
-            </Marker>
-          ))}
-      </MapaSatelite>
-
-      {/* Camada de rótulos: Views comuns posicionadas sobre o mapa (no Android com a nova
-          arquitetura, marcadores com texto saem cortados no react-native-maps 1.20) */}
+      {/* Camada de rótulos: Views comuns posicionadas sobre o mapa pela projeção Web Mercator.
+          Funciona igual nos dois motores de mapa (MapLibre e react-native-maps). */}
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {modo === 'ver' &&
           visiveis.map((p) => {
@@ -469,7 +399,14 @@ export default function Mapa({ navigation, route }: ScreenProps<'Mapa'>) {
 
       {/* Controles laterais */}
       <View style={styles.controles}>
-        <BotaoRedondo icone="🏷️" ativo={rotulos} onPress={() => setRotulos((r) => !r)} />
+        {/* mostra o ícone da camada para a qual o botão vai trocar */}
+        <BotaoRedondo
+          icone={camadaMapa === 'satelite' ? '🗺️' : '🛰️'}
+          onPress={() => setCamadaMapa(camadaMapa === 'satelite' ? 'ruas' : 'satelite')}
+        />
+        {camadaMapa === 'satelite' && (
+          <BotaoRedondo icone="🏷️" ativo={rotulos} onPress={() => setRotulos((r) => !r)} />
+        )}
         <BotaoRedondo icone="🔍" onPress={enquadrarTudo} />
         <BotaoRedondo icone="🎯" onPress={irParaMinhaPosicao} />
       </View>
@@ -647,29 +584,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 6,
     paddingVertical: 2,
-  },
-  marcadorPino: {
-    backgroundColor: colors.laranjaMarco,
-    borderColor: colors.branco,
-    borderRadius: 9,
-    borderWidth: 3,
-    height: 18,
-    width: 18,
-  },
-  vertice: {
-    alignItems: 'center',
-    backgroundColor: colors.branco,
-    borderColor: COR_DESENHO,
-    borderRadius: 13,
-    borderWidth: 3,
-    height: 26,
-    justifyContent: 'center',
-    width: 26,
-  },
-  verticeTexto: {
-    color: colors.azulGnss,
-    fontSize: 11,
-    fontWeight: '800',
   },
   // Controles
   controles: {

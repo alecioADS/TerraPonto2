@@ -41,9 +41,14 @@ valores gerados pelo PROJ em 6 pontos de referência, com diferença abaixo de 1
 
 ### Mapa de satélite, pontos e áreas
 
-- **Imagens de satélite** Esri World Imagery (`react-native-maps` + `UrlTile`), com
-  **cache em disco**: o que já foi visto com internet continua disponível sem sinal
-  (o app avisa "Sem internet — exibindo o mapa salvo"). Botão 🏷️ liga rótulos de cidades.
+- **Imagens de satélite** Esri World Imagery, com **cache em disco**: o que já foi visto
+  com internet continua disponível sem sinal (o app avisa "Sem internet — exibindo o
+  mapa salvo"). Botão 🗺️/🛰️ alterna **satélite ↔ ruas** (OpenStreetMap, a escolha fica
+  salva) e 🏷️ liga rótulos de cidades sobre o satélite.
+- **Motor do mapa** (`src/components/mapa/`): as telas usam só o componente `MapaBase`.
+  No **APK** ele usa o **MapLibre** (aberto, **sem chave de API**, cache de até 300 MB);
+  no **Expo Go**, que não traz o MapLibre, usa o `react-native-maps` com a chave do próprio
+  Expo. Mesma fonte de imagem do app CortexGeo (Esri, sem chave).
 - **Pontos** aparecem com o nome; tocar abre a página do ponto.
 - **Desenhar área**: toque no mapa para criar vértices, toque num ponto coletado para
   usá-lo como vértice, "Vértice GPS" usa a posição atual, arraste para ajustar,
@@ -54,9 +59,9 @@ valores gerados pelo PROJ em 6 pontos de referência, com diferença abaixo de 1
 - Área calculada no elipsóide WGS84 (plano local com raios de curvatura), validada
   contra a fórmula exata da zona elipsoidal: erro < 0,2 ppm até ~11 km de lado.
 
-Obs.: no Expo Go (nova arquitetura), marcadores com texto do `react-native-maps` 1.20
-saem cortados no Android; por isso nomes e etiquetas são desenhados numa camada
-sobre o mapa, posicionada pela projeção Web Mercator.
+Obs.: nomes e etiquetas são desenhados numa camada sobre o mapa, posicionada pela
+projeção Web Mercator — funciona igual nos dois motores (no `react-native-maps` 1.20
+com a nova arquitetura, marcadores com texto saem cortados no Android).
 
 ### Exportar (CSV, KML e ZIP com fotos)
 
@@ -99,7 +104,8 @@ src/
 ├── services/
 │   ├── storage.ts          # Usuários, pontos (CRUD) e fotos – camada Model
 │   └── api.ts              # Chamadas às APIs externas
-├── components/             # CampoTexto e Botao reutilizáveis
+├── components/             # CampoTexto, Botao, Exportacao...
+│   └── mapa/               # MapaBase + motores MapLibre (APK) e react-native-maps (Expo Go)
 ├── global/                 # cores, estilos e formatações (GMS, data, precisão)
 ├── pages/                  # uma pasta por tela (index.tsx)
 └── assets/images/          # logo, selo e ícones do app
@@ -121,3 +127,21 @@ npx expo start
 Leia o QR Code com o app **Expo Go** ou pressione `a` para abrir no emulador Android.
 No emulador, defina uma posição em *Extended controls → Location* (ou
 `adb emu geo fix <lon> <lat>`) para o GPS ter sinal.
+
+## Gerar o APK (instalar no celular)
+
+Requer Android SDK e **JDK 17 ou 21** (o Gradle 8.13 não roda com Java 25).
+
+```bash
+npm install
+npx expo prebuild --platform android --clean
+cd android
+JAVA_HOME=/caminho/do/jdk-21 ./gradlew assembleRelease
+```
+
+O APK sai em `android/app/build/outputs/apk/release/app-release.apk` (assinado com a
+chave de debug — serve para testes, não para a Play Store). O `app.json` desliga a nova
+arquitetura (`newArchEnabled: false`) porque o MapLibre v10 só a suporta parcialmente.
+
+Dica: não compile dentro de uma pasta sincronizada com o iCloud (ex.: Mesa no macOS) —
+os milhares de arquivos do `node_modules`/build travam a sincronização e o disco.
