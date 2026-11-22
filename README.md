@@ -39,6 +39,25 @@ fica salva e vale para todo o app. A conversão UTM (`src/services/geodesia.ts`,
 fórmulas de Snyder/USGS sobre o elipsóide WGS84 ≈ SIRGAS 2000) foi validada contra
 valores gerados pelo PROJ em 6 pontos de referência, com diferença abaixo de 1 mm.
 
+### Mapa de satélite, pontos e áreas
+
+- **Imagens de satélite** Esri World Imagery (`react-native-maps` + `UrlTile`), com
+  **cache em disco**: o que já foi visto com internet continua disponível sem sinal
+  (o app avisa "Sem internet — exibindo o mapa salvo"). Botão 🏷️ liga rótulos de cidades.
+- **Pontos** aparecem com o nome; tocar abre a página do ponto.
+- **Desenhar área**: toque no mapa para criar vértices, toque num ponto coletado para
+  usá-lo como vértice, "Vértice GPS" usa a posição atual, arraste para ajustar,
+  desfazer. Área e perímetro ao vivo e alerta de lados que se cruzam.
+- Cada área tem **nome, observações e cor**; a etiqueta (nome + área) fica no centro.
+  Tocar na área mostra um cartão; "Ver detalhes" abre a edição, com medidas em ha, m²,
+  alqueire mineiro e paulista, edição de vértices e exclusão. Lista em **Áreas** com total.
+- Área calculada no elipsóide WGS84 (plano local com raios de curvatura), validada
+  contra a fórmula exata da zona elipsoidal: erro < 0,2 ppm até ~11 km de lado.
+
+Obs.: no Expo Go (nova arquitetura), marcadores com texto do `react-native-maps` 1.20
+saem cortados no Android; por isso nomes e etiquetas são desenhados numa camada
+sobre o mapa, posicionada pela projeção Web Mercator.
+
 ### Exportar (CSV e ZIP com fotos)
 
 Em *Meus pontos*, o botão **⬇️ Exportar** gera:

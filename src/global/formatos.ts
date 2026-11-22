@@ -32,6 +32,24 @@ export function classificarPrecisao(precisao: number | null) {
   return { cor: colors.vermelhoErro, icone: '🔴', texto: 'Precisão baixa' };
 }
 
+// Número no padrão brasileiro (1.234,56)
+export function numeroBR(valor: number, casas = 2): string {
+  const [inteiro, decimal] = valor.toFixed(casas).split('.');
+  const comPontos = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decimal ? `${comPontos},${decimal}` : comPontos;
+}
+
+// Área em hectares (ou m² quando pequena) para etiquetas
+export function formatarArea(m2: number): string {
+  if (m2 < 10000) return `${numeroBR(m2, 0)} m²`;
+  return `${numeroBR(m2 / 10000, 2)} ha`;
+}
+
+export function formatarDistancia(m: number): string {
+  if (m < 1000) return `${numeroBR(m, 1)} m`;
+  return `${numeroBR(m / 1000, 3)} km`;
+}
+
 export const ICONE_TIPO: Record<string, string> = {
   Marco: '📍',
   Divisa: '🚧',

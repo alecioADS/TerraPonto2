@@ -97,3 +97,112 @@ export function azimuteGraus(lat1: number, lon1: number, lat2: number, lon2: num
   const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dL);
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
+
+// ======================= Polígonos =======================
+
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
+// Projeta os vértices num plano tangente local (Leste/Norte em metros) centrado em
+// (lat0, lon0), usando os raios de curvatura do elipsóide WGS84 naquela latitude:
+//   M = a(1-e²)/(1-e²sen²φ)^(3/2)  (meridiano)   N = a/(1-e²sen²φ)^(1/2)  (primeiro vertical)
+// Para áreas de propriedades rurais (até dezenas de km) o erro é desprezível e,
+// diferente do UTM, não carrega o fator de escala da projeção (área "real" no elipsóide).
+function planoLocal(vertices: LatLng[]): { x: number; y: number }[] {
+  const lat0 = vertices.reduce((s, v) => s + v.latitude, 0) / vertices.length;
+  const lon0 = vertices.reduce((s, v) => s + v.longitude, 0) / vertices.length;
+  const sen = Math.sin(rad(lat0));
+  const w = 1 - E2 * sen * sen;
+  const M = (A * (1 - E2)) / Math.pow(w, 1.5);
+  const N = A / Math.sqrt(w);
+  const cos0 = Math.cos(rad(lat0));
+  return vertices.map((v) => ({
+    x: rad(v.longitude - lon0) * N * cos0,
+    y: rad(v.latitude - lat0) * M,
+  }));
+}
+
+// Área (m²) pela fórmula de Gauss (shoelace) no plano local
+export function areaPoligono(vertices: LatLng[]): number {
+  if (vertices.length < 3) return 0;
+  const p = planoLocal(vertices);
+  let soma = 0;
+  for (let i = 0; i < p.length; i++) {
+    const j = (i + 1) % p.length;
+    soma += p[i].x * p[j].y - p[j].x * p[i].y;
+  }
+  return Math.abs(soma) / 2;
+}
+
+// Perímetro (m). Com `fechado=false` mede só a linha (útil durante o desenho).
+export function perimetroPoligono(vertices: LatLng[], fechado = true): number {
+  if (vertices.length < 2) return 0;
+  const p = planoLocal(vertices);
+  let total = 0;
+  const n = fechado ? p.length : p.length - 1;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % p.length;
+    total += Math.hypot(p[j].x - p[i].x, p[j].y - p[i].y);
+  }
+  return total;
+}
+
+// Centro de massa do polígono (para posicionar a etiqueta no mapa)
+export function centroPoligono(vertices: LatLng[]): LatLng {
+  const n = vertices.length;
+  const media = {
+    latitude: vertices.reduce((s, v) => s + v.latitude, 0) / n,
+    longitude: vertices.reduce((s, v) => s + v.longitude, 0) / n,
+  };
+  if (n < 3) return media;
+
+  let a2 = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < n; i++) {
+    const xi = vertices[i].longitude;
+    const yi = vertices[i].latitude;
+    const xj = vertices[(i + 1) % n].longitude;
+    const yj = vertices[(i + 1) % n].latitude;
+    const cruz = xi * yj - xj * yi;
+    a2 += cruz;
+    cx += (xi + xj) * cruz;
+    cy += (yi + yj) * cruz;
+  }
+  if (Math.abs(a2) < 1e-14) return media;
+  return { latitude: cy / (3 * a2), longitude: cx / (3 * a2) };
+}
+
+// Verifica se algum lado cruza outro lado não adjacente (polígono "em forma de 8")
+export function temAutointersecao(vertices: LatLng[]): boolean {
+  const n = vertices.length;
+  if (n < 4) return false;
+  const p = planoLocal(vertices);
+  const orient = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) =>
+    Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+
+  for (let i = 0; i < n; i++) {
+    const a1 = p[i];
+    const a2 = p[(i + 1) % n];
+    for (let j = i + 1; j < n; j++) {
+      // ignora lados adjacentes (compartilham um vértice)
+      if (j === i || (j + 1) % n === i || (i + 1) % n === j) continue;
+      const b1 = p[j];
+      const b2 = p[(j + 1) % n];
+      if (
+        orient(a1, a2, b1) * orient(a1, a2, b2) < 0 &&
+        orient(b1, b2, a1) * orient(b1, b2, a2) < 0
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Unidades agrárias usadas no Brasil
+export const M2_POR_HECTARE = 10000;
+export const M2_POR_ALQUEIRE_MINEIRO = 48400; // MG, GO, RJ
+export const M2_POR_ALQUEIRE_PAULISTA = 24200; // SP, PR

@@ -336,6 +336,12 @@ export default function DetalhePonto({ navigation, route }: ScreenProps<'Detalhe
 
           <Botao titulo="Salvar alterações" onPress={salvar} carregando={salvando} />
           <Botao
+            titulo="🗺️  Ver no mapa"
+            variante="secundario"
+            style={{ marginTop: 12 }}
+            onPress={() => navigation.navigate('Mapa', { focoPontoId: ponto.id })}
+          />
+          <Botao
             titulo="🌦️  Ver clima neste local"
             variante="secundario"
             style={{ marginTop: 12 }}

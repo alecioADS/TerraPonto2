@@ -13,6 +13,9 @@ import MeusPontos from '../pages/meusPontos';
 import DetalhePonto from '../pages/detalhePonto';
 import Clima from '../pages/clima';
 import Contato from '../pages/contato';
+import Mapa from '../pages/mapa';
+import Areas from '../pages/areas';
+import DetalhePoligono from '../pages/detalhePoligono';
 
 // Tipagem das rotas e seus parâmetros
 export type RootStackParamList = {
@@ -24,6 +27,16 @@ export type RootStackParamList = {
   DetalhePonto: { id: string; novo?: boolean };
   Clima: { latitude: number; longitude: number; nome: string } | undefined;
   Contato: undefined;
+  Mapa:
+    | {
+        focoPontoId?: string;
+        focoPoligonoId?: string;
+        editarPoligonoId?: string;
+        novoDesenho?: boolean;
+      }
+    | undefined;
+  Areas: undefined;
+  DetalhePoligono: { id: string; novo?: boolean };
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
@@ -64,6 +77,9 @@ export default function Routes() {
             <Stack.Screen name="DetalhePonto" component={DetalhePonto} options={{ title: 'Ponto' }} />
             <Stack.Screen name="Clima" component={Clima} options={{ title: 'Clima no campo' }} />
             <Stack.Screen name="Contato" component={Contato} options={{ title: 'Fale conosco' }} />
+            <Stack.Screen name="Mapa" component={Mapa} options={{ title: 'Mapa' }} />
+            <Stack.Screen name="Areas" component={Areas} options={{ title: 'Áreas' }} />
+            <Stack.Screen name="DetalhePoligono" component={DetalhePoligono} options={{ title: 'Área' }} />
           </>
         ) : (
           // Rotas públicas

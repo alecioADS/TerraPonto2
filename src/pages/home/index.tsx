@@ -7,10 +7,11 @@ import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../global/colors';
 import { globalStyles } from '../../global/styles';
 import { ScreenProps } from '../../routes';
+import { listarPoligonos } from '../../services/poligonos';
 import { listarPontos } from '../../services/storage';
 
 interface ItemMenu {
-  rota: 'NovoPonto' | 'MeusPontos' | 'Clima' | 'Contato';
+  rota: 'NovoPonto' | 'MeusPontos' | 'Mapa' | 'Areas' | 'Clima' | 'Contato';
   icone: string;
   titulo: string;
   descricao: string;
@@ -19,6 +20,8 @@ interface ItemMenu {
 const MENU: ItemMenu[] = [
   { rota: 'NovoPonto', icone: '🛰️', titulo: 'Coletar ponto', descricao: 'Usar o GPS do aparelho' },
   { rota: 'MeusPontos', icone: '🗂️', titulo: 'Meus pontos', descricao: 'Lista do levantamento' },
+  { rota: 'Mapa', icone: '🗺️', titulo: 'Mapa', descricao: 'Satélite, pontos e áreas' },
+  { rota: 'Areas', icone: '📐', titulo: 'Áreas', descricao: 'Polígonos e medições' },
   { rota: 'Clima', icone: '🌦️', titulo: 'Clima', descricao: 'Previsão para o campo' },
   { rota: 'Contato', icone: '✉️', titulo: 'Fale conosco', descricao: 'Suporte TerraPonto' },
 ];
@@ -26,11 +29,14 @@ const MENU: ItemMenu[] = [
 export default function Home({ navigation }: ScreenProps<'Home'>) {
   const { usuario, sair } = useAuth();
   const [totalPontos, setTotalPontos] = useState(0);
+  const [totalAreas, setTotalAreas] = useState(0);
 
-  // Recarrega o contador sempre que a Home volta a ficar visível
+  // Recarrega os contadores sempre que a Home volta a ficar visível
   useFocusEffect(
     useCallback(() => {
-      if (usuario) listarPontos(usuario.email).then((p) => setTotalPontos(p.length));
+      if (!usuario) return;
+      listarPontos(usuario.email).then((p) => setTotalPontos(p.length));
+      listarPoligonos(usuario.email).then((a) => setTotalAreas(a.length));
     }, [usuario]),
   );
 
@@ -55,9 +61,10 @@ export default function Home({ navigation }: ScreenProps<'Home'>) {
 
       <View style={styles.resumo}>
         <Text style={styles.resumoNumero}>{totalPontos}</Text>
-        <Text style={styles.resumoTexto}>
-          {totalPontos === 1 ? 'ponto registrado' : 'pontos registrados'}
-        </Text>
+        <Text style={styles.resumoTexto}>{totalPontos === 1 ? 'ponto' : 'pontos'}</Text>
+        <View style={styles.resumoDivisor} />
+        <Text style={styles.resumoNumero}>{totalAreas}</Text>
+        <Text style={styles.resumoTexto}>{totalAreas === 1 ? 'área' : 'áreas'}</Text>
       </View>
 
       <View style={styles.grade}>
@@ -116,6 +123,12 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '800',
     marginRight: 12,
+  },
+  resumoDivisor: {
+    backgroundColor: '#1E4468',
+    height: 36,
+    marginHorizontal: 18,
+    width: 1,
   },
   resumoTexto: {
     color: colors.branco,
