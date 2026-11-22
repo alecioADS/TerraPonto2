@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "TerraPonto",
+    "slug": "terraponto-login",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8FAF5"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/adaptive-icon.png",
+        "backgroundColor": "#F8FAF5"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O TerraPonto usa sua localização para registrar pontos de campo."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "O TerraPonto usa a câmera para fotografar os pontos de campo.",
+          "photosPermission": "O TerraPonto acessa suas fotos para anexá-las aos pontos de campo."
+        }
+      ]
+    ]
+  }
+}

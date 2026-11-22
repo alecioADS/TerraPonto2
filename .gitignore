@@ -1,0 +1,25 @@
+node_modules/
+.expo/
+dist/
+dist-*/
+web-build/
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# Builds nativos (gerados pelo Expo prebuild)
+/android
+/ios
+
+# Segredos e certificados
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.env*.local
+
+# Sistema / IDE
+.DS_Store
+.idea/
+.vscode/
